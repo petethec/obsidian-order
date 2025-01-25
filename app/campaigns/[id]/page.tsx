@@ -19,12 +19,7 @@ import { MilestoneList } from '@/components/campaigns/milestone-list';
 import { ReputationCard } from '@/components/profile/reputation-card';
 import { ShareCard } from '@/components/campaigns/share-card';
 import { VoteCard } from '@/components/campaigns/vote-card';
-import dynamic from 'next/dynamic';
-
-const CampaignAnalytics = dynamic(
-  () => import('@/components/campaigns/campaign-analytics').then(mod => mod.CampaignAnalytics),
-  { ssr: false }
-);
+import { CampaignWrapper } from '@/components/campaigns/campaign-wrapper';
 
 // Generate static params for all campaign IDs
 export async function generateStaticParams() {
@@ -235,173 +230,172 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     'https://images.unsplash.com/photo-1536859355448-76f92ebdc33d';
 
   return (
-    <div className="container py-10">
-      <Suspense fallback={null}>
-        <CampaignAnalytics title={campaign?.title || ''} />
-      </Suspense>
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="relative aspect-video overflow-hidden rounded-lg">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-            <img
-              src={`${imageUrl}?w=800&q=80`}
-              alt={campaign.title}
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+    <CampaignWrapper title={campaign.title}>
+      <div className="container py-10">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="relative aspect-video overflow-hidden rounded-lg">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+              <img
+                src={`${imageUrl}?w=800&q=80`}
+                alt={campaign.title}
+                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{campaign.title}</h1>
+                <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                  <Target className="h-4 w-4" />
+                  <span className="capitalize">{campaign.type.replace('-', ' ')}</span>
+                </div>
+              </div>
+
+              <div className="prose dark:prose-invert">
+                <p>{campaign.description}</p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Success Outcome</CardTitle>
+                  <CardDescription>What happens if we reach our goal</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 text-primary mb-2">
+                    {campaign.success_type === 'reward' && <Gift className="h-5 w-5" />}
+                    {campaign.success_type === 'stretch' && <Target className="h-5 w-5" />}
+                    {campaign.success_type === 'community' && <Heart className="h-5 w-5" />}
+                    <span className="capitalize">{campaign.success_type}</span>
+                  </div>
+                  <p>{campaign.success_description}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Failure Outcome</CardTitle>
+                  <CardDescription>What happens if we don&apos;t reach our goal</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 text-destructive mb-2">
+                    {campaign.failure_type === 'refund' && <CircleDollarSign className="h-5 w-5" />}
+                    {campaign.failure_type === 'charity' && <Heart className="h-5 w-5" />}
+                    {campaign.failure_type === 'challenge' && <AlertTriangle className="h-5 w-5" />}
+                    <span className="capitalize">{campaign.failure_type}</span>
+                  </div>
+                  <p>{campaign.failure_description}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Milestones Section */}
+            <MilestoneList
+              campaignId={campaign.id}
+              milestones={campaign.milestones}
+              isCreator={isCreator}
             />
+
+            {/* Updates Section */}
+            <CampaignUpdates updates={updates} />
+
+            {/* Comments Section */}
+            <SupporterComments comments={comments} />
+
+            {/* Voting Section - Only show for competitive innovation campaigns */}
+            {campaign.type === 'competitive_innovation' && (
+              <VoteCard
+                campaignId={campaign.id}
+                totalVotes={campaign.votes}
+                hasVoted={campaign.hasVoted}
+              />
+            )}
           </div>
 
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{campaign.title}</h1>
-              <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-                <Target className="h-4 w-4" />
-                <span className="capitalize">{campaign.type.replace('-', ' ')}</span>
-              </div>
-            </div>
-
-            <div className="prose dark:prose-invert">
-              <p>{campaign.description}</p>
-            </div>
-
             <Card>
-              <CardHeader>
-                <CardTitle>Success Outcome</CardTitle>
-                <CardDescription>What happens if we reach our goal</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 text-primary mb-2">
-                  {campaign.success_type === 'reward' && <Gift className="h-5 w-5" />}
-                  {campaign.success_type === 'stretch' && <Target className="h-5 w-5" />}
-                  {campaign.success_type === 'community' && <Heart className="h-5 w-5" />}
-                  <span className="capitalize">{campaign.success_type}</span>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <Suspense fallback={<CampaignSkeleton />}>
+                    <div>
+                      <div className="text-2xl font-bold">
+                        ${campaign.current_amount.toLocaleString()}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        of ${campaign.funding_goal.toLocaleString()} goal
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="bg-secondary h-2 rounded-full">
+                        <div
+                          className="bg-primary h-2 rounded-full"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>{Math.round(progress)}% funded</span>
+                        <span>{daysLeft} days left</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm">
+                      <Vote className="h-4 w-4 text-primary" />
+                      <span>{campaign.pledges.toLocaleString()} pledges</span>
+                    </div>
+
+                    <PledgeForm campaignId={campaign.id} />
+                  </Suspense>
                 </div>
-                <p>{campaign.success_description}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Failure Outcome</CardTitle>
-                <CardDescription>What happens if we don&apos;t reach our goal</CardDescription>
+                <CardTitle>Campaign Details</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 text-destructive mb-2">
-                  {campaign.failure_type === 'refund' && <CircleDollarSign className="h-5 w-5" />}
-                  {campaign.failure_type === 'charity' && <Heart className="h-5 w-5" />}
-                  {campaign.failure_type === 'challenge' && <AlertTriangle className="h-5 w-5" />}
-                  <span className="capitalize">{campaign.failure_type}</span>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Target</div>
+                  <div className="font-medium">{campaign.target}</div>
                 </div>
-                <p>{campaign.failure_description}</p>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Start Date</div>
+                  <div className="font-medium">
+                    {new Date(campaign.start_date).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">End Date</div>
+                  <div className="font-medium">
+                    {new Date(campaign.end_date).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Created By</div>
+                  <div className="font-medium">{campaign.creator.username}</div>
+                </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Milestones Section */}
-          <MilestoneList
-            campaignId={campaign.id}
-            milestones={campaign.milestones}
-            isCreator={isCreator}
-          />
-
-          {/* Updates Section */}
-          <CampaignUpdates updates={updates} />
-
-          {/* Comments Section */}
-          <SupporterComments comments={comments} />
-
-          {/* Voting Section - Only show for competitive innovation campaigns */}
-          {campaign.type === 'competitive_innovation' && (
-            <VoteCard
-              campaignId={campaign.id}
-              totalVotes={campaign.votes}
-              hasVoted={campaign.hasVoted}
+            {/* Creator Reputation */}
+            <ReputationCard
+              score={creatorReputation.score}
+              successfulCampaigns={creatorReputation.successful_campaigns}
+              totalRaised={creatorReputation.total_raised}
+              totalBackers={creatorReputation.total_backers}
+              achievements={creatorReputation.achievements}
             />
-          )}
-        </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <Suspense fallback={<CampaignSkeleton />}>
-                  <div>
-                    <div className="text-2xl font-bold">
-                      ${campaign.current_amount.toLocaleString()}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      of ${campaign.funding_goal.toLocaleString()} goal
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="bg-secondary h-2 rounded-full">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>{Math.round(progress)}% funded</span>
-                      <span>{daysLeft} days left</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <Vote className="h-4 w-4 text-primary" />
-                    <span>{campaign.pledges.toLocaleString()} pledges</span>
-                  </div>
-
-                  <PledgeForm campaignId={campaign.id} />
-                </Suspense>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Campaign Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">Target</div>
-                <div className="font-medium">{campaign.target}</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">Start Date</div>
-                <div className="font-medium">
-                  {new Date(campaign.start_date).toLocaleDateString()}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">End Date</div>
-                <div className="font-medium">
-                  {new Date(campaign.end_date).toLocaleDateString()}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">Created By</div>
-                <div className="font-medium">{campaign.creator.username}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Creator Reputation */}
-          <ReputationCard
-            score={creatorReputation.score}
-            successfulCampaigns={creatorReputation.successful_campaigns}
-            totalRaised={creatorReputation.total_raised}
-            totalBackers={creatorReputation.total_backers}
-            achievements={creatorReputation.achievements}
-          />
-
-          {/* Share Card */}
-          <ShareCard
-            campaignId={campaign.id}
-            title={campaign.title}
-            description={campaign.description}
-          />
+            {/* Share Card */}
+            <ShareCard
+              campaignId={campaign.id}
+              title={campaign.title}
+              description={campaign.description}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </CampaignWrapper>
   );
 }
