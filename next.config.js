@@ -19,7 +19,7 @@ const nextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        'punycode': false,
+        'punycode': require.resolve('punycode/'),
       };
     }
     return config;
