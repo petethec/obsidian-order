@@ -19,7 +19,12 @@ import { MilestoneList } from '@/components/campaigns/milestone-list';
 import { ReputationCard } from '@/components/profile/reputation-card';
 import { ShareCard } from '@/components/campaigns/share-card';
 import { VoteCard } from '@/components/campaigns/vote-card';
-import { CampaignAnalytics } from '@/components/campaigns/campaign-analytics';
+import dynamic from 'next/dynamic';
+
+const CampaignAnalytics = dynamic(
+  () => import('@/components/campaigns/campaign-analytics').then(mod => mod.CampaignAnalytics),
+  { ssr: false }
+);
 
 // Generate static params for all campaign IDs
 export async function generateStaticParams() {
@@ -231,7 +236,9 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
 
   return (
     <div className="container py-10">
-      <CampaignAnalytics title={campaign.title} />
+      <Suspense fallback={null}>
+        <CampaignAnalytics title={campaign?.title || ''} />
+      </Suspense>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="relative aspect-video overflow-hidden rounded-lg">
