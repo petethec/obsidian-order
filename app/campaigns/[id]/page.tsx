@@ -16,10 +16,10 @@ import { SupporterComments } from '@/components/campaigns/supporter-comments';
 import { getMockCampaigns } from '@/lib/mock-data';
 import { PledgeForm } from '@/components/campaigns/pledge-form';
 import { MilestoneList } from '@/components/campaigns/milestone-list';
-import { event as logAnalyticsEvent } from '@/lib/analytics';
 import { ReputationCard } from '@/components/profile/reputation-card';
 import { ShareCard } from '@/components/campaigns/share-card';
 import { VoteCard } from '@/components/campaigns/vote-card';
+import { CampaignAnalytics } from '@/components/campaigns/campaign-analytics';
 
 // Generate static params for all campaign IDs
 export async function generateStaticParams() {
@@ -134,14 +134,6 @@ const getCampaign = cache(async (id: string): Promise<Campaign | null> => {
 export default function CampaignDetailPage({ params }: { params: { id: string } }) {
   const campaign = getMockCampaigns()[params.id as keyof ReturnType<typeof getMockCampaigns>];
 
-  // Log campaign view
-  if (campaign) {
-    logAnalyticsEvent({
-      action: 'view_campaign',
-      category: 'engagement',
-      label: campaign.title,
-    });
-  }
   if (!campaign) {
     return (
       <div className="container py-10">
@@ -165,7 +157,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
   const progress = (campaign.current_amount / campaign.funding_goal) * 100;
   const endDate = new Date(campaign.end_date);
   const daysLeft = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-  const isCreator = false; // This will be handled by the client components
+  const isCreator = false;
   const creatorReputation = campaign.creator?.reputation || {
     score: 0,
     successful_campaigns: 0,
@@ -239,6 +231,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
 
   return (
     <div className="container py-10">
+      <CampaignAnalytics title={campaign.title} />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <div className="relative aspect-video overflow-hidden rounded-lg">
