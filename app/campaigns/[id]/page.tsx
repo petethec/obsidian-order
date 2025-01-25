@@ -19,7 +19,7 @@ import { MilestoneList } from '@/components/campaigns/milestone-list';
 import { ReputationCard } from '@/components/profile/reputation-card';
 import { ShareCard } from '@/components/campaigns/share-card';
 import { VoteCard } from '@/components/campaigns/vote-card';
-import { CampaignWrapper } from '@/components/campaigns/campaign-wrapper';
+import Script from 'next/script';
 
 // Generate static params for all campaign IDs
 export async function generateStaticParams() {
@@ -230,7 +230,18 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     'https://images.unsplash.com/photo-1536859355448-76f92ebdc33d';
 
   return (
-    <CampaignWrapper title={campaign.title}>
+    <>
+      <Script id="analytics">{`
+        fetch('/api/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'view_campaign',
+            category: 'engagement',
+            label: '${campaign.title}'
+          })
+        }).catch(console.error);
+      `}</Script>
       <div className="container py-10">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
@@ -396,6 +407,6 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
       </div>
-    </CampaignWrapper>
+    </>
   );
 }
