@@ -19,9 +19,13 @@ const nextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        'punycode': require.resolve('punycode/'),
+        'punycode': false,
       };
     }
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@radix-ui/react-primitive': require.resolve('@radix-ui/react-primitive'),
+    };
     return config;
   },
 };
