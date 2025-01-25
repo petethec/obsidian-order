@@ -19,7 +19,7 @@ import { MilestoneList } from '@/components/campaigns/milestone-list';
 import { ReputationCard } from '@/components/profile/reputation-card';
 import { ShareCard } from '@/components/campaigns/share-card';
 import { VoteCard } from '@/components/campaigns/vote-card';
-import Script from 'next/script';
+import { CampaignViewTracker } from '@/components/analytics/campaign-view-tracker';
 
 // Generate static params for all campaign IDs
 export async function generateStaticParams() {
@@ -231,17 +231,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
 
   return (
     <>
-      <Script id="analytics">{`
-        fetch('/api/analytics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'view_campaign',
-            category: 'engagement',
-            label: '${campaign.title}'
-          })
-        }).catch(console.error);
-      `}</Script>
+      <CampaignViewTracker title={campaign.title} />
       <div className="container py-10">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
