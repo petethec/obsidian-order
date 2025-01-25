@@ -131,22 +131,25 @@ const getCampaign = cache(async (id: string): Promise<Campaign | null> => {
 });
 
 export default async function CampaignDetailPage({ params }: { params: { id: string } }) {
-  const campaign = getMockCampaigns().find(c => c.id === params.id) || null;
+  const campaigns = getMockCampaigns();
+  const campaign = campaigns[params.id as keyof typeof campaigns] || null;
   
   // Track page view server-side during static generation
-  try {
-    await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/analytics`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'view_campaign',
-        category: 'engagement',
-        label: campaign?.title
-      })
-    });
-  } catch (error) {
-    // Ignore analytics errors during static generation
-    console.error('Analytics error:', error);
+  if (campaign) {
+    try {
+      await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/analytics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'view_campaign',
+          category: 'engagement',
+          label: campaign.title
+        })
+      });
+    } catch (error) {
+      // Ignore analytics errors during static generation
+      console.error('Analytics error:', error);
+    }
   }
 
   if (!campaign) {
